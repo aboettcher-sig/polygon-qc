@@ -12,8 +12,6 @@ gdal.UseExceptions()
 ogr.UseExceptions()
 osr.UseExceptions()
 
-_QGIS_APP = None
-
 
 def create_package(path):
     source = ogr.GetDriverByName("GPKG").CreateDataSource(str(path))
@@ -48,10 +46,7 @@ def package(tmp_path):
 
 @pytest.fixture(scope="session")
 def qgis_app():
-    from qgis.core import QgsApplication
+    from qgis.testing import start_app
 
-    global _QGIS_APP
-    _QGIS_APP = QgsApplication.instance() or QgsApplication([], False)
-    _QGIS_APP.initQgis()
-    yield _QGIS_APP
-    # QGIS providers must outlive layer wrappers; process exit releases the app.
+    # QGIS owns initialization and orderly provider cleanup before Qt teardown.
+    yield start_app()

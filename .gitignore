@@ -21,4 +21,5 @@ __pycache__/
 /.aws/
 /.codex/
 /.agents/
+/symbology-style.db*
 

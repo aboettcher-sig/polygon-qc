@@ -3,13 +3,13 @@
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QIcon, QPixmap
+from qgis.PyQt.QtGui import QAction, QIcon, QPixmap
 from qgis.PyQt.QtWidgets import (
-    QAction, QCheckBox, QComboBox, QDockWidget, QGridLayout, QHBoxLayout,
+    QCheckBox, QComboBox, QDockWidget, QGridLayout, QHBoxLayout,
     QLabel, QProgressBar, QPushButton, QScrollArea, QSizePolicy, QSlider, QVBoxLayout, QWidget,
 )
 from qgis.core import (
-    Qgis, QgsCoordinateTransform, QgsMapLayerProxyModel, QgsProject,
+    Qgis, QgsCoordinateTransform, QgsProject,
     QgsProviderRegistry, QgsRectangle,
 )
 from qgis.gui import QgsMapLayerComboBox
@@ -34,7 +34,7 @@ class PolygonQCPlugin:
     def show(self):
         if self.dock is None:
             self.dock = ReviewDock(self.iface)
-            self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock)
+            self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
         self.dock.show()
         self.dock.raise_()
 
@@ -70,7 +70,7 @@ class ReviewDock(QDockWidget):
         root = QWidget()
         layout = QVBoxLayout(root)
         self.layer_choice = QgsMapLayerComboBox()
-        self.layer_choice.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.layer_choice.setFilters(Qgis.LayerFilter.PolygonLayer)
         layout.addWidget(QLabel("Review layer"))
         layout.addWidget(self.layer_choice)
         self.start = QPushButton("Start review")
@@ -112,7 +112,7 @@ class ReviewDock(QDockWidget):
         session_layout.addWidget(QLabel("Apply class to selected polygons"))
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setMinimumHeight(240)
         self.palette = QWidget()
         self.palette_layout = QGridLayout(self.palette)
@@ -126,7 +126,7 @@ class ReviewDock(QDockWidget):
         session_layout.addWidget(self.overlay)
         opacity_row = QHBoxLayout()
         opacity_row.addWidget(QLabel("Opacity"))
-        self.opacity = QSlider(Qt.Horizontal)
+        self.opacity = QSlider(Qt.Orientation.Horizontal)
         self.opacity.setRange(10, 100)
         self.opacity.setValue(45)
         self.opacity.valueChanged.connect(self.set_opacity)
@@ -156,14 +156,14 @@ class ReviewDock(QDockWidget):
         self.session.setEnabled(False)
         self.message = QLabel("Choose a working copy of your polygon GeoPackage.")
         self.message.setWordWrap(True)
-        self.message.setTextFormat(Qt.PlainText)
+        self.message.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.message)
         self.setWidget(root)
         QgsProject.instance().layersWillBeRemoved.connect(self.layers_removed)
 
     def report_error(self, exc):
         self.message.setText(str(exc))
-        self.iface.messageBar().pushMessage("Polygon QC", str(exc), level=Qgis.Warning, duration=8)
+        self.iface.messageBar().pushMessage("Polygon QC", str(exc), level=Qgis.MessageLevel.Warning, duration=8)
 
     def attach(self):
         layer = self.layer_choice.currentLayer()
@@ -227,7 +227,7 @@ class ReviewDock(QDockWidget):
             swatch = QPixmap(14, 14)
             swatch.fill(class_color(name, index))
             button.setIcon(QIcon(swatch))
-            button.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
+            button.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
             button.setMinimumHeight(44 if len(name) > 14 else 32)
             button.setToolTip(f"Set selected polygons to {name}")
             button.clicked.connect(lambda checked=False, target=name: self.assign(target))

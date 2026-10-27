@@ -9,9 +9,13 @@ Licensed under **GNU GPL version 3 or later**; see [LICENSE](LICENSE).
 
 ## Try it locally
 
-Requires **QGIS 3.40–3.x**. Developed and tested with QGIS **3.40.15** on Linux;
-QGIS 4 and other operating systems have not been tested. No pip packages are
-required to use the plugin.
+Version **0.2.0** supports **QGIS 3.40–3.x and QGIS 4.x**. Verified on Linux with
+QGIS **3.40.15 / Qt 5.15.18** and **4.2.3 / Qt 6.9.2**. Other operating systems
+have not been tested. No pip packages are required to use the plugin.
+
+Version **0.1.0** remains available in Git history as the original QGIS 3 release.
+Both versions are marked experimental; repository installs require enabling
+**Show also experimental plugins** in the QGIS Plugin Manager settings.
 
 1. Build the installable ZIP:
 
@@ -67,7 +71,7 @@ work. The plugin also recognizes its plot filter in a project saved mid-session.
 
 ## Data contract
 
-Version 0.1 supports local polygon GeoPackages with a named feature layer and
+The plugin supports local polygon GeoPackages with a named feature layer and
 these fields:
 
 | Field | Requirement / behavior |
@@ -130,6 +134,44 @@ modules. The build overwrites one fixed ZIP and includes only plugin source and
 metadata, the icon, license, README, and changelog; it never bundles imagery,
 GeoPackages, tests, or caches. Use `python3 scripts/build.py --versioned` for a
 release ZIP such as `dist/polygon_qc-0.1.0.zip`.
+
+The QGIS 4 environment can be reproduced without changing the installed desktop:
+
+```sh
+docker run --rm --network none \
+  -e QT_QPA_PLATFORM=offscreen -e PYTHONDONTWRITEBYTECODE=1 \
+  --mount "type=bind,src=$PWD,dst=/workspace,readonly" -w /workspace \
+  --entrypoint /bin/bash qgis/qgis:4.2.3-questing \
+  -lc 'python3 -m pytest -q -p no:cacheprovider'
+```
+
+For the optional desktop smoke test in that container, also pass `-e DISPLAY=:99`
+and run `python3 tests/desktop_smoke.py`; the QGIS launcher requires a display
+variable even when Qt uses its offscreen platform. The sample project must have
+been prepared first. All writes during testing go to temporary copies.
+
+GitHub Actions runs the QGIS 4 checks and builds a downloadable ZIP on pushes and
+pull requests. The full real-data integration is local because the sample is
+excluded from Git. The workflow does not submit anything to the QGIS registry.
+
+## Publishing releases
+
+The public source repository and issue links are configured in
+`polygon_qc/metadata.txt`. Keep the package directory `polygon_qc` unchanged across
+releases so QGIS recognizes updates to the same plugin.
+
+1. Run the tests, update the version and both changelogs, and build with
+   `python3 scripts/build.py --versioned`.
+2. Commit, tag the matching version, and push the source and tag to GitHub.
+3. Sign in at [plugins.qgis.org](https://plugins.qgis.org/plugins/add/) and upload
+   that version's ZIP. The first upload creates the plugin entry; subsequent
+   uploads belong to that same entry. GitHub pushes alone do not update it.
+4. Check the registry's scan and approval status before announcing availability.
+
+The initial release is `v0.1.0`; the compatibility update is `v0.2.0`. Submit
+them in that order. The review fields and existing working GeoPackages need no
+migration for the compatibility update. Registry authentication belongs in the
+publisher's account or a secret store, never in this repository or a ZIP.
 
 ## Repository layout
 

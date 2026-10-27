@@ -1,0 +1,34 @@
+name: Test and build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qgis4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: qgis/qgis:4.2.3-questing@sha256:8996496c15887a8fae0da05fa38103093ddbf104525bcbd67bf733a914fb1444
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Test with QGIS 4
+        run: python3 -m pytest -q -p no:cacheprovider
+      - name: Build release ZIP
+        run: python3 scripts/build.py --versioned
+      - uses: actions/upload-artifact@v7
+        with:
+          name: polygon-qc
+          path: dist/polygon_qc-*.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 30

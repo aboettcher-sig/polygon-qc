@@ -9,10 +9,10 @@ class ToggleSelectTool(QgsMapTool):
     def __init__(self, canvas, layer):
         super().__init__(canvas)
         self.layer = layer
-        self.setCursor(Qt.CrossCursor)
+        self.setCursor(Qt.CursorShape.CrossCursor)
 
     def canvasReleaseEvent(self, event):
-        if event.button() != Qt.LeftButton:
+        if event.button() != Qt.MouseButton.LeftButton:
             return
         point = self.toLayerCoordinates(self.layer, event.pos())
         geometry = QgsGeometry.fromPointXY(QgsPointXY(point))

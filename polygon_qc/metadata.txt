@@ -1,9 +1,9 @@
 [general]
 name=Polygon QC
 description=Review fixed polygon classes one plot at a time.
-version=0.1.0
+version=0.2.0
 qgisMinimumVersion=3.40
-qgisMaximumVersion=3.99
+qgisMaximumVersion=4.99
 author=aboettcher-sig
 email=aboettcher@sig-gis.com
 homepage=https://github.com/aboettcher-sig/polygon-qc#readme
@@ -15,5 +15,6 @@ about=Select existing polygons, correct class_final, and complete plots while pr
 category=Vector
 experimental=True
 hasProcessingProvider=False
-changelog=0.1.0: Initial release for QGIS 3.40 and later QGIS 3 versions. Fixed-polygon class review, plot completion, immediate saving, and session undo.
+changelog=0.2.0: QGIS 4 / Qt 6 compatibility while retaining QGIS 3.40+ support. Review behavior and data fields are unchanged.
+    0.1.0: Initial fixed-polygon review release for QGIS 3.40+.
 
