@@ -4,9 +4,16 @@ description=Review fixed polygon classes one plot at a time.
 version=0.1.0
 qgisMinimumVersion=3.40
 qgisMaximumVersion=3.99
-author=Polygon QC contributors
+author=aboettcher-sig
+email=aboettcher@sig-gis.com
+homepage=https://github.com/aboettcher-sig/polygon-qc#readme
+repository=https://github.com/aboettcher-sig/polygon-qc
+tracker=https://github.com/aboettcher-sig/polygon-qc/issues
+license=GPL-3.0-or-later
+icon=icon.svg
 about=Select existing polygons, correct class_final, and complete plots while preserving geometry and class_auto. Changes save immediately; session undo is available.
 category=Vector
 experimental=True
 hasProcessingProvider=False
+changelog=0.1.0: Initial release for QGIS 3.40 and later QGIS 3 versions. Fixed-polygon class review, plot completion, immediate saving, and session undo.
 

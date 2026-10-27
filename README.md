@@ -5,6 +5,8 @@ time. Select incorrect polygons, assign the correct class, then complete the plo
 to accept the rest. The plugin never splits, merges, creates, deletes, or redraws
 polygons, and never writes to `class_auto`.
 
+Licensed under **GNU GPL version 3 or later**; see [LICENSE](LICENSE).
+
 ## Try it locally
 
 Requires **QGIS 3.40–3.x**. Developed and tested with QGIS **3.40.15** on Linux;
@@ -125,7 +127,9 @@ directory; no test datasets are committed.
 For a new build, rebuild the ZIP, close QGIS, and reinstall the ZIP after reopening.
 Restart QGIS after replacing an already loaded plugin so Python loads the new
 modules. The build overwrites one fixed ZIP and includes only plugin source and
-metadata; it never bundles imagery, GeoPackages, tests, or caches.
+metadata, the icon, license, README, and changelog; it never bundles imagery,
+GeoPackages, tests, or caches. Use `python3 scripts/build.py --versioned` for a
+release ZIP such as `dist/polygon_qc-0.1.0.zip`.
 
 ## Repository layout
 
@@ -137,6 +141,6 @@ dev/         Ignored local working copy and test project
 dist/        Ignored generated plugin ZIP
 ```
 
-Commit the source, scripts, tests, `README.md`, `pyproject.toml`, and `.gitignore`.
+Commit the source, scripts, tests, documentation, license, `pyproject.toml`, and `.gitignore`.
 The original sample directory and generated artifacts are ignored. No generated
 UI files, vendored dependencies, or versioned build directories are needed.
