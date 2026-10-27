@@ -10,7 +10,7 @@ on:
       tags:
         description: "Existing tags to upload, in order (space separated)"
         required: true
-        default: "v0.1.0 v0.2.0"
+        default: "v0.2.1"
 
 permissions:
   contents: read

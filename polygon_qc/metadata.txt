@@ -1,7 +1,7 @@
 [general]
 name=Polygon QC
 description=Review fixed polygon classes one plot at a time.
-version=0.2.0
+version=0.2.1
 qgisMinimumVersion=3.40
 qgisMaximumVersion=4.99
 author=aboettcher-sig
@@ -15,6 +15,7 @@ about=Select existing polygons, correct class_final, and complete plots while pr
 category=Vector
 experimental=True
 hasProcessingProvider=False
-changelog=0.2.0: QGIS 4 / Qt 6 compatibility while retaining QGIS 3.40+ support. Review behavior and data fields are unchanged.
+changelog=0.2.1: Match the registered polygon_QC package name and document safe quoted SQL identifiers for registry scanning. Add SQL-injection regression tests. Review behavior is unchanged.
+    0.2.0: QGIS 4 / Qt 6 compatibility while retaining QGIS 3.40+ support. Review behavior and data fields are unchanged.
     0.1.0: Initial fixed-polygon review release for QGIS 3.40+.
 

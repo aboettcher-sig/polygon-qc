@@ -3,7 +3,7 @@ import sqlite3
 
 import pytest
 
-from polygon_qc.store import ReviewError, ReviewStore
+from polygon_qc.store import ReviewError, ReviewStore, quote
 
 
 def rows(path):
@@ -125,4 +125,40 @@ def test_unknown_plot_rejected(package):
     with pytest.raises(ReviewError, match="Unknown plot"):
         store.complete(999)
     assert store.summary()[1] == set()
+
+
+@pytest.mark.parametrize("table", ["super pixels", 'superpixels"; DROP TABLE gpkg_contents; --'])
+def test_quoted_layer_names_remain_identifiers(package, table):
+    original = rows(package)
+    with sqlite3.connect(package) as db:
+        db.execute(f"ALTER TABLE superpixels RENAME TO {quote(table)}")
+        db.execute("UPDATE gpkg_contents SET table_name=? WHERE table_name='superpixels'", (table,))
+        db.execute("UPDATE gpkg_geometry_columns SET table_name=? WHERE table_name='superpixels'", (table,))
+    store = ReviewStore(package, table)
+    store.assign(1, [1], "canopy")
+    store.complete(1)
+    assert ReviewStore(package, table).summary() == ({1: 2, 2: 2}, {1})
+    store.undo()
+    store.undo()
+    with sqlite3.connect(package) as db:
+        actual = db.execute(
+            f"SELECT fid,plot_id,class_auto,class_final,reviewed,notes,geom FROM {quote(table)} ORDER BY fid"
+        ).fetchall()
+        assert actual == original
+        assert db.execute("SELECT COUNT(*) FROM gpkg_contents WHERE table_name=?", (table,)).fetchone()[0] == 1
+
+
+def test_sql_like_class_labels_are_bound_as_values(package):
+    target = "canopy'; DROP TABLE gpkg_contents; --"
+    with ReviewStore(package).connection(write=True) as db:
+        db.execute("UPDATE superpixels SET class_final=?,reviewed=2 WHERE fid=3", (target,))
+    original = rows(package)
+    store = ReviewStore(package)
+    store.assign(1, [1, 2], target)
+    assert [r[3] for r in rows(package)[:2]] == [target, target]
+    assert protected(rows(package)) == protected(original)
+    store.complete(1)
+    store.undo()
+    store.undo()
+    assert rows(package) == original
 

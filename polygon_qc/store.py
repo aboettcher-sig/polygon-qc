@@ -15,6 +15,12 @@ class ReviewError(Exception):
 
 
 def quote(name):
+    """Quote a SQLite identifier; values must still use bound parameters.
+
+    Identifiers cannot be supplied through SQL placeholders. Doubling every
+    embedded double quote keeps arbitrary layer names inside one identifier.
+    The B608 annotations below apply only to this quoted identifier, never data.
+    """
     return '"' + name.replace('"', '""') + '"'
 
 
@@ -59,7 +65,7 @@ class ReviewStore:
             if not geometry or geometry[0].upper() not in ("POLYGON", "MULTIPOLYGON"):
                 raise ReviewError("Choose a polygon GeoPackage layer.")
             bad = db.execute(
-                f"SELECT COUNT(*) FROM {self.sql_table} WHERE "
+                f"SELECT COUNT(*) FROM {self.sql_table} WHERE "  # nosec B608
                 "typeof(plot_id) != 'integer' OR class_auto IS NULL OR class_final IS NULL "
                 "OR typeof(class_auto) != 'text' OR typeof(class_final) != 'text' "
                 "OR typeof(reviewed) != 'integer' OR reviewed NOT IN (0,1,2) "
@@ -69,10 +75,10 @@ class ReviewStore:
             if bad:
                 raise ReviewError(f"{bad} features have invalid plot IDs, classes, or review states. No data changed.")
             self.plots = tuple(r[0] for r in db.execute(
-                f"SELECT DISTINCT plot_id FROM {self.sql_table} ORDER BY plot_id"
+                f"SELECT DISTINCT plot_id FROM {self.sql_table} ORDER BY plot_id"  # nosec B608
             ))
             self.classes = tuple(r[0] for r in db.execute(
-                f"SELECT class_auto FROM {self.sql_table} UNION SELECT class_final "
+                f"SELECT class_auto FROM {self.sql_table} UNION SELECT class_final "  # nosec B608
                 f"FROM {self.sql_table} ORDER BY 1"
             ))
             if not self.plots:
@@ -108,7 +114,7 @@ class ReviewStore:
 
     def _ensure_state(self, db):
         db.execute(
-            f"CREATE TABLE IF NOT EXISTS {self.STATE_TABLE} ("
+            "CREATE TABLE IF NOT EXISTS polygon_qc_plots ("
             "layer_name TEXT NOT NULL, plot_id INTEGER NOT NULL, "
             "completed INTEGER NOT NULL CHECK(completed IN (0,1)), "
             "PRIMARY KEY(layer_name,plot_id))"
@@ -121,21 +127,21 @@ class ReviewStore:
     def _completed(self, db, plot):
         if not self._has_state(db):
             return False
-        row = db.execute(f"SELECT completed FROM {self.STATE_TABLE} WHERE layer_name=? AND plot_id=?",
+        row = db.execute("SELECT completed FROM polygon_qc_plots WHERE layer_name=? AND plot_id=?",
                          (self.table, plot)).fetchone()
         return bool(row and row[0])
 
     def _set_completed(self, db, plot, completed):
         self._ensure_state(db)
         db.execute(
-            f"INSERT INTO {self.STATE_TABLE}(layer_name,plot_id,completed) VALUES (?,?,?) "
+            "INSERT INTO polygon_qc_plots(layer_name,plot_id,completed) VALUES (?,?,?) "
             "ON CONFLICT(layer_name,plot_id) DO UPDATE SET completed=excluded.completed",
             (self.table, plot, int(completed)),
         )
 
     def _rows(self, db, plot):
         return tuple(FeatureState(*r) for r in db.execute(
-            f"SELECT fid,class_auto,class_final,reviewed FROM {self.sql_table} WHERE plot_id=? ORDER BY fid",
+            f"SELECT fid,class_auto,class_final,reviewed FROM {self.sql_table} WHERE plot_id=? ORDER BY fid",  # nosec B608
             (plot,),
         ))
 
@@ -145,17 +151,17 @@ class ReviewStore:
 
     def summary(self):
         with self.connection() as db:
-            counts = dict(db.execute(f"SELECT plot_id,COUNT(*) FROM {self.sql_table} GROUP BY plot_id"))
+            counts = dict(db.execute(f"SELECT plot_id,COUNT(*) FROM {self.sql_table} GROUP BY plot_id"))  # nosec B608
             completed = set()
             if self._has_state(db):
                 completed = {r[0] for r in db.execute(
-                    f"SELECT plot_id FROM {self.STATE_TABLE} WHERE layer_name=? AND completed=1",
+                    "SELECT plot_id FROM polygon_qc_plots WHERE layer_name=? AND completed=1",
                     (self.table,),
                 )} & set(self.plots)
             return counts, completed
 
     def _write_rows(self, db, rows):
-        db.executemany(f"UPDATE {self.sql_table} SET class_final=?,reviewed=? WHERE fid=?",
+        db.executemany(f"UPDATE {self.sql_table} SET class_final=?,reviewed=? WHERE fid=?",  # nosec B608
                        [(r.final, r.reviewed, r.fid) for r in rows])
 
     def _touch(self, db):

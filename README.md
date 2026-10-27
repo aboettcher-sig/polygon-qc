@@ -9,7 +9,7 @@ Licensed under **GNU GPL version 3 or later**; see [LICENSE](LICENSE).
 
 ## Try it locally
 
-Version **0.2.0** supports **QGIS 3.40–3.x and QGIS 4.x**. Verified on Linux with
+Version **0.2.1** supports **QGIS 3.40–3.x and QGIS 4.x**. Verified on Linux with
 QGIS **3.40.15 / Qt 5.15.18** and **4.2.3 / Qt 6.9.2**. Other operating systems
 have not been tested. No pip packages are required to use the plugin.
 
@@ -178,8 +178,10 @@ One-time setup for automatic uploads:
    [GitHub Actions secrets](https://github.com/aboettcher-sig/polygon-qc/settings/secrets/actions).
    GitHub sign-in connects your identity to QGIS; this separate token authorizes
    the upload workflow. Do not put the token in source files or chat.
-4. Open [Publish to QGIS](https://github.com/aboettcher-sig/polygon-qc/actions/workflows/publish.yml),
-   choose **Run workflow** on `main`, and use `v0.1.0 v0.2.0` for the first uploads.
+4. New version tags trigger publishing automatically. To submit an existing tag,
+   open [Publish to QGIS](https://github.com/aboettcher-sig/polygon-qc/actions/workflows/publish.yml),
+   choose **Run workflow** on `main`, and enter the tag. Check that it has not
+   already been uploaded before running the workflow.
 
 For subsequent releases, run the tests, update the metadata version and both
 changelogs, commit, and push a matching `vX.Y.Z` tag. The workflow builds from
@@ -197,9 +199,10 @@ request times out, check the registry before rerunning; if the first of multiple
 versions was already accepted, rerun with only the remaining tags. Existing
 registry versions are never overwritten by this workflow.
 
-The initial release is `v0.1.0`; the compatibility update is `v0.2.0`. Submit
-them in that order. The review fields and existing working GeoPackages need no
-migration for the compatibility update. Registry authentication belongs in the
+The initial release `v0.1.0` and compatibility update `v0.2.0` were submitted
+in that order but blocked by registry scanning. Version `v0.2.1` addresses the
+reproduced Bandit findings. The review fields and existing working GeoPackages
+need no migration. Registry authentication belongs in the
 publisher's account or a secret store, never in this repository or a ZIP.
 
 ## Repository layout

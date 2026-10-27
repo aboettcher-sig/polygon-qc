@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1
+
+- Package the plugin as `polygon_QC` to match its QGIS registry entry.
+- Use literal SQL for the fixed plot-completion table and document the existing
+  identifier quoting with narrowly scoped Bandit B608 false-positive annotations.
+- Test layer names containing quotes and SQL syntax, and class labels containing
+  SQL syntax, through editing, completion, and undo.
+
+The review behavior, geometry protection, original classes, and saved progress
+are unchanged. No data migration is needed. Earlier registry uploads were blocked
+by the scanner; this patch addresses the reproduced Bandit findings.
+
 ## 0.2.0
 
 - Support QGIS 4 / Qt 6 while retaining QGIS 3.40+ compatibility.

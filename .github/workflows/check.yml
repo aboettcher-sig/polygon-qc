@@ -9,6 +9,18 @@ permissions:
   contents: read
 
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check plugin security findings
+        run: |
+          python3 -m venv "$RUNNER_TEMP/security"
+          "$RUNNER_TEMP/security/bin/pip" install bandit==1.9.4
+          "$RUNNER_TEMP/security/bin/bandit" -r polygon_qc
   qgis4:
     runs-on: ubuntu-latest
     timeout-minutes: 20
