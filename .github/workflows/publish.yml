@@ -1,0 +1,118 @@
+name: Publish to QGIS
+
+on:
+  push:
+    tags: ["v*"]
+    branches: [main]
+    paths: [".github/workflows/publish.yml"]
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Existing tags to upload, in order (space separated)"
+        required: true
+        default: "v0.1.0 v0.2.0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qgis-registry-publish
+  cancel-in-progress: false
+
+jobs:
+  readiness:
+    if: github.event_name == 'push' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check registry setup
+        env:
+          QGIS_PLUGIN_TOKEN: ${{ secrets.QGIS_PLUGIN_TOKEN }}
+        run: |
+          if [ -n "$QGIS_PLUGIN_TOKEN" ]; then
+            echo 'QGIS_PLUGIN_TOKEN is configured; run Publish to QGIS to submit existing tags.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'QGIS_PLUGIN_TOKEN is not configured. Add the QGIS plugin token in repository Actions secrets.' >> "$GITHUB_STEP_SUMMARY"
+            echo '::warning::QGIS_PLUGIN_TOKEN is not configured.'
+          fi
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: qgis/qgis:4.2.3-questing@sha256:8996496c15887a8fae0da05fa38103093ddbf104525bcbd67bf733a914fb1444
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONDONTWRITEBYTECODE: "1"
+      RELEASE_TAGS: ${{ inputs.tags || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check publishing credential
+        env:
+          QGIS_PLUGIN_TOKEN: ${{ secrets.QGIS_PLUGIN_TOKEN }}
+        run: |
+          if [ -z "$QGIS_PLUGIN_TOKEN" ]; then
+            echo '::error::Add the QGIS plugin upload token as the repository Actions secret QGIS_PLUGIN_TOKEN. See README Publishing releases.'
+            exit 1
+          fi
+      - name: Build the exact tagged sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/qgis-releases"
+          for tag in $RELEASE_TAGS; do
+            [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid release tag'; exit 1; }
+            source_dir="$RUNNER_TEMP/qgis-releases/$tag"
+            mkdir "$source_dir"
+            git archive "refs/tags/$tag" | tar -x -C "$source_dir"
+            (
+              cd "$source_dir"
+              python3 - "$tag" <<'PY'
+          import configparser
+          import sys
+          metadata = configparser.ConfigParser(interpolation=None)
+          metadata.read('polygon_qc/metadata.txt')
+          if 'v' + metadata['general']['version'] != sys.argv[1]:
+              raise SystemExit('Tag does not match metadata version')
+          PY
+              # The original release predates Qt 6; its QGIS 3 tests were run
+              # before tagging. Every subsequent release must pass on QGIS 4.
+              if [[ "$tag" != v0.1.0 ]]; then
+                python3 -m pytest -q -p no:cacheprovider
+              fi
+              python3 scripts/build.py --versioned
+            )
+          done
+      - name: Upload versions in order
+        shell: bash
+        env:
+          QGIS_PLUGIN_TOKEN: ${{ secrets.QGIS_PLUGIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          for tag in $RELEASE_TAGS; do
+            version="${tag#v}"
+            package="$RUNNER_TEMP/qgis-releases/$tag/dist/polygon_qc-$version.zip"
+            response="$RUNNER_TEMP/qgis-upload-response.json"
+            status=$(curl --silent --show-error --connect-timeout 30 --max-time 180 \
+              --output "$response" --write-out '%{http_code}' \
+              --header "Authorization: Bearer $QGIS_PLUGIN_TOKEN" \
+              --form "package=@$package" \
+              https://plugins.qgis.org/plugins/api/polygon_qc/version/add/)
+            python3 - "$response" "$status" "$version" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          try:
+              result = json.loads(Path(sys.argv[1]).read_text())
+          except (ValueError, UnicodeError):
+              raise SystemExit(f'Unexpected registry response (HTTP {sys.argv[2]}). Check QGIS before retrying.')
+          if (sys.argv[2] != '201' or result.get('success') is not True
+                  or result.get('version') != sys.argv[3]):
+              print('Registry rejected or did not confirm the upload:', result)
+              raise SystemExit(1)
+          print(f'QGIS received version {sys.argv[3]}; security scanning and approval remain.')
+          PY
+            echo "QGIS received **$version**. Check the registry for scanning and approval." >> "$GITHUB_STEP_SUMMARY"
+          done

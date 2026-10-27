@@ -152,7 +152,8 @@ been prepared first. All writes during testing go to temporary copies.
 
 GitHub Actions runs the QGIS 4 checks and builds a downloadable ZIP on pushes and
 pull requests. The full real-data integration is local because the sample is
-excluded from Git. The workflow does not submit anything to the QGIS registry.
+excluded from Git. The separate **Publish to QGIS** workflow submits tagged
+releases to the registry using a repository secret.
 
 ## Publishing releases
 
@@ -160,13 +161,31 @@ The public source repository and issue links are configured in
 `polygon_qc/metadata.txt`. Keep the package directory `polygon_qc` unchanged across
 releases so QGIS recognizes updates to the same plugin.
 
-1. Run the tests, update the version and both changelogs, and build with
-   `python3 scripts/build.py --versioned`.
-2. Commit, tag the matching version, and push the source and tag to GitHub.
-3. Sign in at [plugins.qgis.org](https://plugins.qgis.org/plugins/add/) and upload
-   that version's ZIP. The first upload creates the plugin entry; subsequent
-   uploads belong to that same entry. GitHub pushes alone do not update it.
-4. Check the registry's scan and approval status before announcing availability.
+One-time setup for automatic uploads:
+
+1. Sign in to QGIS using the existing GitHub connection. If Polygon QC does not
+   yet exist in your account, [create an empty plugin](https://plugins.qgis.org/plugins/add-empty/)
+   with package name `polygon_qc` and display name `Polygon QC`.
+2. Create a plugin upload token from its [Tokens page](https://plugins.qgis.org/plugins/polygon_qc/tokens/).
+3. Save it as `QGIS_PLUGIN_TOKEN` in this repository's
+   [GitHub Actions secrets](https://github.com/aboettcher-sig/polygon-qc/settings/secrets/actions).
+   GitHub sign-in connects your identity to QGIS; this separate token authorizes
+   the upload workflow. Do not put the token in source files or chat.
+4. Open [Publish to QGIS](https://github.com/aboettcher-sig/polygon-qc/actions/workflows/publish.yml),
+   choose **Run workflow** on `main`, and use `v0.1.0 v0.2.0` for the first uploads.
+
+For subsequent releases, run the tests, update the metadata version and both
+changelogs, commit, and push a matching `vX.Y.Z` tag. The workflow builds from
+that exact tag, runs QGIS 4 tests, and uploads automatically. The original
+`v0.1.0` tag predates Qt 6 and was tested locally on QGIS 3 before publication.
+The manual workflow also accepts a single existing tag if a release needs to
+be submitted later. Submitted versions still need QGIS security scanning and
+approval before users can download them from the registry.
+
+Uploads stop on the first failure and are not automatically retried. If a
+request times out, check the registry before rerunning; if the first of multiple
+versions was already accepted, rerun with only the remaining tags. Existing
+registry versions are never overwritten by this workflow.
 
 The initial release is `v0.1.0`; the compatibility update is `v0.2.0`. Submit
 them in that order. The review fields and existing working GeoPackages need no
@@ -178,6 +197,7 @@ publisher's account or a secret store, never in this repository or a ZIP.
 ```text
 polygon_qc/  Plugin source and QGIS metadata
 scripts/     ZIP builder and local sample-project setup
+.github/     CI checks and authenticated QGIS publishing
 tests/       Storage and QGIS integration tests
 dev/         Ignored local working copy and test project
 dist/        Ignored generated plugin ZIP
