@@ -82,7 +82,7 @@ jobs:
               if [[ "$tag" != v0.1.0 ]]; then
                 python3 -m pytest -q -p no:cacheprovider
               fi
-              python3 scripts/build.py --versioned
+              python3 "$GITHUB_WORKSPACE/scripts/build.py" --source "$source_dir" --versioned
             )
           done
       - name: Upload versions in order
@@ -99,7 +99,7 @@ jobs:
               --output "$response" --write-out '%{http_code}' \
               --header "Authorization: Bearer $QGIS_PLUGIN_TOKEN" \
               --form "package=@$package" \
-              https://plugins.qgis.org/plugins/api/polygon_qc/version/add/)
+              https://plugins.qgis.org/plugins/api/polygon_QC/version/add/)
             python3 - "$response" "$status" "$version" <<'PY'
           import json
           import sys

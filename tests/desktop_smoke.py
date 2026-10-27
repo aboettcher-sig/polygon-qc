@@ -24,8 +24,8 @@ from qgis.utils import iface
 
 def finish():
     iface.mapCanvas().stopRendering()
-    if 'polygon_qc' in qgis.utils.plugins:
-        if not qgis.utils.unloadPlugin('polygon_qc'):
+    if 'polygon_QC' in qgis.utils.plugins:
+        if not qgis.utils.unloadPlugin('polygon_QC'):
             Path(RESULT).write_text(json.dumps({'ok': False, 'error': 'Plugin unload failed'}))
     # QGIS treats files under /tmp as temporary layers and otherwise prompts on exit.
     QgsProject.instance().removeAllMapLayers()
@@ -36,9 +36,9 @@ def finish():
 
 def run():
     try:
-        assert qgis.utils.loadPlugin('polygon_qc'), 'loadPlugin failed'
-        assert qgis.utils.startPlugin('polygon_qc'), 'startPlugin failed'
-        plugin = qgis.utils.plugins['polygon_qc']
+        assert qgis.utils.loadPlugin('polygon_QC'), 'loadPlugin failed'
+        assert qgis.utils.startPlugin('polygon_QC'), 'startPlugin failed'
+        plugin = qgis.utils.plugins['polygon_QC']
         plugin.show()
         dock = plugin.dock
         layer = next(l for l in QgsProject.instance().mapLayers().values() if l.name().startswith('Polygon QC'))

@@ -17,6 +17,11 @@ Version **0.1.0** remains available in Git history as the original QGIS 3 releas
 Both versions are marked experimental; repository installs require enabling
 **Show also experimental plugins** in the QGIS Plugin Manager settings.
 
+The registry package is `polygon_QC` (capital `QC`). If you installed an earlier
+local ZIP containing `polygon_qc`, uninstall that copy and restart QGIS before
+installing the registry package, to avoid loading both copies. Saved GeoPackage
+reviews are unaffected.
+
 1. Build the installable ZIP:
 
    ```sh
@@ -158,15 +163,17 @@ releases to the registry using a repository secret.
 ## Publishing releases
 
 The public source repository and issue links are configured in
-`polygon_qc/metadata.txt`. Keep the package directory `polygon_qc` unchanged across
-releases so QGIS recognizes updates to the same plugin.
+`polygon_qc/metadata.txt`. The source directory remains `polygon_qc`; the builder
+places its files inside `polygon_QC/` in the ZIP to match the registered package.
+Keep that installed package name unchanged across releases so QGIS recognizes
+updates to the same plugin. ZIP filenames remain `polygon_qc-<version>.zip`.
 
 One-time setup for automatic uploads:
 
 1. Sign in to QGIS using the existing GitHub connection. If Polygon QC does not
    yet exist in your account, [create an empty plugin](https://plugins.qgis.org/plugins/add-empty/)
-   with package name `polygon_qc` and display name `Polygon QC`.
-2. Create a plugin upload token from its [Tokens page](https://plugins.qgis.org/plugins/polygon_qc/tokens/).
+   with package name `polygon_QC` and display name `Polygon QC`.
+2. Create a plugin upload token from its [Tokens page](https://plugins.qgis.org/plugins/polygon_QC/tokens/).
 3. Save it as `QGIS_PLUGIN_TOKEN` in this repository's
    [GitHub Actions secrets](https://github.com/aboettcher-sig/polygon-qc/settings/secrets/actions).
    GitHub sign-in connects your identity to QGIS; this separate token authorizes
@@ -176,7 +183,10 @@ One-time setup for automatic uploads:
 
 For subsequent releases, run the tests, update the metadata version and both
 changelogs, commit, and push a matching `vX.Y.Z` tag. The workflow builds from
-that exact tag, runs QGIS 4 tests, and uploads automatically. The original
+that exact tag, runs QGIS 4 tests, and uploads automatically. The publishing
+workflow's builder maps the source files into the registered `polygon_QC/`
+folder, including when packaging the older tags. File contents are preserved.
+The original
 `v0.1.0` tag predates Qt 6 and was tested locally on QGIS 3 before publication.
 The manual workflow also accepts a single existing tag if a release needs to
 be submitted later. Submitted versions still need QGIS security scanning and
