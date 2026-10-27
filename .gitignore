@@ -1,0 +1,19 @@
+# Local datasets and generated projects are never part of the plugin repository.
+/2025-05-12_us-co-denver-2025_sample_one/
+/dev/
+/dist/
+*.gpkg
+*.gpkg-shm
+*.gpkg-wal
+*.gpkg-journal
+*.tif
+*.tiff
+*.qgz
+*.qgs
+*.qgd
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.DS_Store
+
